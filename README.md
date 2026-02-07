@@ -1,4 +1,4 @@
-﻿# Disturbance and landscape characteristics interactively drive dispersal strategies in continuous and fragmented metacommunities
+# Disturbance and landscape characteristics interactively drive dispersal strategies in continuous and fragmented metacommunities
 
 *This repository contains the code and data to reproduce the analyses and figures in the paper:*
 
@@ -26,7 +26,7 @@
 
 The raw simulation output (~15 GB) is too large for GitHub and is archived on Zenodo:
 
-> [Zenodo DOI link -- to be added upon upload]
+> [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18519866.svg)](https://doi.org/10.5281/zenodo.18519866)
 
 To reproduce the figures, download the data from Zenodo and place the contents into the `data-raw/` directory, maintaining the subfolder structure (e.g., `data-raw/96/`, `data-raw/101/`, etc.).
 
