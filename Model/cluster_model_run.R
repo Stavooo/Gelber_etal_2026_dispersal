@@ -1,37 +1,24 @@
-################################################################################
+﻿################################################################################
 #
-# Cluster Model Run Script
+# Cluster Model Run
 #
-# This script runs the fragmentation model on a computing cluster using
-# parallel processing.
+# This is the script used to produce the paper's simulation data on the
+# HPC cluster at Freie Universitaet Berlin. Submit via run_model.sh.
 #
-# Usage: Rscript cluster_model_run.R <task_id> <workers>
-#   task_id: Unique identifier for this run
-#   workers: Number of parallel workers to use
-#
-# Author: Stav Gelber
-# Paper: Disturbance and landscape characteristics interactively drive 
-#        dispersal strategies in continuous and fragmented metacommunities
 # Authors: Stav Gelber, Britta Tietjen, Felix May
 #
 ################################################################################
-
-# Load packages -----------------------------------------------------------
 
 library(raster)
 library(data.table)
 library(tibble)
 library(foreach)
-library(doParallel)
-library(purrr)
-library(vegan)
-library(dplyr)
-
-# Source model functions --------------------------------------------------
 
 source("src/generate_grid.R")
 source("src/generate_agents.R")
 source("src/distribute_agents.R")
+source("src/environment_variation.R")
+source("src/disturbance.R")
 source("src/birth.R")
 source("src/death.R")
 source("src/initialize.R")
@@ -43,118 +30,55 @@ source("src/disperse.R")
 source("src/initialize_result_files.R")
 source("parameters.R")
 
-
-# Get command line arguments ----------------------------------------------
+# Cluster arguments -------------------------------------------------------
 
 args <- commandArgs(trailingOnly = TRUE)
 task_id <- args[1]
 workers <- as.integer(args[2])
+exp_name <- "unique_dispersal_"
+exp_num <- "101"  # adjust per experiment
 
-# Set experiment name
-exp_name <- "cluster_run"
-exp_num <- "01" # Change for each new experiment
+# Parallel setup ----------------------------------------------------------
 
-print(paste0("Running with ", workers, " workers"))
-print(paste0("Available cores: ", parallel::detectCores()))
-
-
-# Setup parallel processing -----------------------------------------------
-
-my_cluster <- parallel::makeCluster(
+my.cluster <- parallel::makeCluster(
   workers,
   port = 11000 + as.integer(task_id),
   outfile = "",
-  type = "FORK" # Use "FORK" on Linux/Mac, "PSOCK" on Windows
+  type = "FORK"
 )
 
-# Check cluster definition (optional)
-print("Cluster definition:")
-print(my_cluster)
-
-# Register parallel backend
-doParallel::registerDoParallel(cl = my_cluster)
-
-# Verify registration (optional)
-print("Cluster registered:")
-print(foreach::getDoParRegistered())
-
-# Check number of workers (optional)
-print("Number of workers:")
-print(foreach::getDoParWorkers())
-
-
-# Run model simulations in parallel ---------------------------------------
+doParallel::registerDoParallel(cl = my.cluster)
 
 result_par <- foreach(
   i = 1:nrow(var_par),
-  .packages = c("data.table", "raster", "vegan", "dplyr", "tibble")
+  .packages = c("data.table", "raster")
 ) %dopar% {
   GeDo_run(
     mod_par = mod_par,
     var_par = var_par[i, ],
     switch = switch,
     file_name = exp_name,
-    task_id = task_id,
+    task_id = 1,
     sim_id = i
   )
 }
 
-# Stop the cluster
-parallel::stopCluster(cl = my_cluster)
-
+parallel::stopCluster(cl = my.cluster)
 
 # Combine and write results -----------------------------------------------
 
-# Save static parameters
 static_par <- rbind(as.data.frame(t(switch)), as.data.frame(t(mod_par)))
-write.csv(
-  static_par,
-  file = paste0("Outputs/", exp_name, exp_num, "_static_parameters.csv")
-)
+write.csv(static_par, file = paste0("Outputs/", exp_name, exp_num, "_static_parameters.csv"))
 
-# Save varying parameters
-var_par_write <- var_par
-var_par_write <- tibble::rowid_to_column(var_par_write, "sim_ID")
-write.csv(
-  var_par_write,
-  file = paste0("Outputs/", exp_name, exp_num, "_varying_parameters.csv"),
-  row.names = FALSE
-)
+var_par_write <- rowid_to_column(var_par, "sim_ID")
+write.csv(var_par_write, file = paste0("Outputs/", exp_name, exp_num, "_varaying_parameters.csv"), row.names = FALSE)
 
-# Transpose results list
-result_list <- purrr::transpose(result_par)
+result_par <- purrr::transpose(result_par)
 
-# Combine all results
-output_all <- data.table::rbindlist(result_list[["output_all"]])
-output_sample <- data.table::rbindlist(result_list[["output_sample"]])
-output_dispersal <- data.table::rbindlist(result_list[["output_dispersal"]])
+output_all <- data.table::rbindlist(result_par[["output_all"]])
+output_sample <- data.table::rbindlist(result_par[["output_sample"]])
+output_dispersal <- data.table::rbindlist(result_par[["output_dispersal"]])
 
-# Write combined results to disk
-data.table::fwrite(
-  x = output_all,
-  file = paste0(
-    "Outputs/",
-    exp_name, exp_num, "_rep_", task_id, "_output_general.csv"
-  ),
-  sep = ","
-)
-
-data.table::fwrite(
-  x = output_sample,
-  file = paste0(
-    "Outputs/",
-    exp_name, exp_num, "_rep_", task_id, "_output_sample.csv"
-  ),
-  sep = ","
-)
-
-data.table::fwrite(
-  x = output_dispersal,
-  file = paste0(
-    "Outputs/",
-    exp_name, exp_num, "_rep_", task_id, "_output_dispersal.csv"
-  ),
-  sep = ","
-)
-
-print(paste0("Task ", task_id, " completed successfully!"))
+data.table::fwrite(x = output_all, file = paste0("Outputs/", exp_name, exp_num, "_rep_", task_id, "_output_general.csv"), sep = ",")
+data.table::fwrite(x = output_sample, file = paste0("Outputs/", exp_name, exp_num, "_rep_", task_id, "_output_sample.csv"), sep = ",")
+data.table::fwrite(x = output_dispersal, file = paste0("Outputs/", exp_name, exp_num, "_rep_", task_id, "_output_dispersal.csv"), sep = ",")

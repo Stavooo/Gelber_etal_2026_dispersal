@@ -1,236 +1,73 @@
-# Disturbance and landscape characteristics interactively drive dispersal strategies in continuous and fragmented metacommunities
-
-<!-- badges: start -->
-<!-- badges: end -->
+﻿# Disturbance and landscape characteristics interactively drive dispersal strategies in continuous and fragmented metacommunities
 
 *This repository contains the code and data to reproduce the analyses and figures in the paper:*
 
-**Disturbance and landscape characteristics interactively drive dispersal strategies in continuous and fragmented metacommunities**
+**Gelber, S., Tietjen, B., & May, F. (2026). Disturbance and landscape characteristics interactively drive dispersal strategies in continuous and fragmented metacommunities.**
 
 ## Authors
 
-Stav Gelber, Britta Tietjen, Felix May
+- Stav Gelber, Britta Tietjen, Felix May
 
 ## Abstract
 
-<!-- Add paper abstract here when available -->
-
-This spatially explicit, individual-based metacommunity model investigates how disturbance regimes and landscape characteristics (habitat amount, spatial autocorrelation, and fragmentation) interact to shape dispersal strategies across species in metacommunities. The model demonstrates that optimal dispersal distances vary with environmental conditions, providing insights into how species with different dispersal abilities respond to habitat fragmentation and disturbance.
+Habitat fragmentation, driven by human activities, disrupts habitat connectivity and alters ecological processes through geometric and demographic fragmentation effects. Dispersal plays a fundamental role in shaping the distribution, abundance, and persistence of species in modified landscapes. While previous research looked at the evolution of dispersal strategies at the species level, community-level dynamics remain underexplored. Species exhibit diverse dispersal strategies to persist in modified landscapes, yet predicting how these strategies interact at the community level requires a more integrated approach. This study employed an individual-based simulation model to explore how fragmentation and other landscape characteristics influence community-level dispersal strategies. We tested the effects of varying fragmentation levels, environmental autocorrelation, habitat amount, and disturbance levels on the emerging distribution of dispersal distances within a community in modified and continuous landscapes. We hypothesised that fragmentation and other spatial patterns would significantly shape community composition, favouring particular dispersal strategies under specific environmental conditions. The findings reveal that higher disturbance levels and greater habitat amount increased the community-weighted mean of dispersal distance, while fragmentation showed only minor variation. Additionally, low autocorrelation was associated with the highest community-weighted mean of dispersal distance. These results highlight the importance of considering community-level dynamics when predicting ecosystem responses to landscape modification. By clarifying how landscape structure and disturbance shape community-level dispersal strategies, this study advances our understanding of the mechanisms underlying species persistence and community structure in modified landscapes.
 
 ## Repository Structure
 
--   `Model/`: Source code to run the model simulations
-    -   `src/`: Core model functions
-        -   `GeDo_run.R`: Main model workflow separating geometric and demographic fragmentation effects
-        -   `parameters.R`: Model parameters and configuration switches
-        -   `initialize.R`, `generate_grid.R`, `generate_agents.R`, `distribute_agents.R`: Initialization functions
-        -   `birth.R`, `death.R`, `immigration.R`, `disperse.R`: Core ecological processes
-        -   `cookie_cutting.R`: Landscape fragmentation function
-        -   `landscape.R`: Landscape generation utilities
-        -   `initialize_result_files.R`: Output file initialization
-    -   `run_model.R`: Script to run the model locally (single run, sequential, or parallel)
-    -   `cluster_model_run.R`: Script to run the model on a computing cluster
-    -   `run_model.sh`: SLURM batch script for cluster submission
-    -   `Outputs/`: Directory for model output files
-    
--   `R/`: R scripts to reproduce the figures in the paper
-    -   `figures/`: Final manuscript figures (Figure 2-7)
+- `Model/`: Source code of the individual-based simulation model
+  - `src/`: Core model functions (birth, death, dispersal, disturbance, etc.)
+  - `parameters.R`: Model parameters and configuration
+  - `cluster_model_run.R`: Script used to run simulations on HPC cluster
+  - `run_model.R`: Script to run the model locally
+  - `run_model.sh`: SLURM batch script for cluster submission
+- `R/`: R scripts to reproduce the figures from model output
+  - `generate_figures.R`: Main script to produce all manuscript and appendix figures
+  - `process_sim.R`, `make_plots_boxplot.R`, `make_plots_timeSeries.R`: Helper functions
+  - `figures/`: Final manuscript figures (Figures 2--7, S1--S4)
+- `data-raw/`: Raw model output (see Data Availability below)
 
--   `data-raw/`: Raw data from model simulations used to produce the figures
+## Data Availability
 
-## Model Description
+The raw simulation output (~15 GB) is too large for GitHub and is archived on Zenodo:
 
-The model simulates metacommunity dynamics on spatially structured landscapes:
+> [Zenodo DOI link  to be added upon upload]
 
-### Key Features
+To reproduce the figures, download the data from Zenodo and place the contents into the `data-raw/` directory, maintaining the subfolder structure (e.g., `data-raw/96/`, `data-raw/101/`, etc.).
 
-- **Spatially explicit individual-based model** tracking individual organisms across a gridded landscape
-- **Species-specific dispersal strategies** with varying dispersal distances
-- **Habitat heterogeneity** generated using neutral landscape models (fractal Brownian motion)
-- **Fragmentation manipulation** using a "cookie-cutter" approach to separate geometric vs. demographic effects
-- **Disturbance dynamics** affecting population persistence
-- **Immigration** from external species pools
-- **Niche-based establishment** where individual fitness depends on environmental match
+## Reproducing the Figures
 
-### Model Processes (per time step)
+1. Clone this repository.
+2. Download the simulation data from Zenodo into `data-raw/`.
+3. Install required R packages:
+   ```r
+   install.packages(c("ggplot2", "patchwork", "ggdist", "dplyr", "gtools", "viridis",
+                       "gridExtra", "grid", "knitr"))
+   ```
+4. From the repository root, run:
+   ```r
+   source("R/generate_figures.R")
+   ```
 
-1. **Birth**: Individuals reproduce based on niche fit and local density
-2. **Dispersal**: Offspring disperse according to species-specific dispersal kernels
-3. **Death**: Mortality influenced by niche mismatch and edge effects
-4. **Immigration**: Species can immigrate from outside the landscape
+## Reproducing the Simulations
 
-### Key Parameters
-
-- **Landscape characteristics**:
-  - `hab`: Habitat amount (proportion of suitable habitat)
-  - `ac`: Spatial autocorrelation (landscape smoothness)
-  - `frag`: Fragmentation level (landscape configuration)
-  
-- **Species traits**:
-  - Species-specific dispersal distances (continuous distribution)
-  - Niche breadth (environmental tolerance)
-  
-- **Demographic parameters**:
-  - Birth and death rates
-  - Carrying capacity
-  - Immigration rate
-
-## Installation
-
-### Prerequisites
-
-The model requires R (>= 4.0.0) and the following packages:
-
-```r
-# Install required packages
-install.packages(c(
-  "raster",
-  "data.table",
-  "tibble",
-  "foreach",
-  "doParallel",
-  "purrr",
-  "vegan",
-  "dplyr"
-))
-```
-
-### Clone the Repository
-
-```bash
-git clone https://github.com/YOUR_USERNAME/Gelber_etal_2025_dispersal.git
-cd Gelber_etal_2025_dispersal
-```
-
-## Usage
-
-### Running the Model Locally
-
-The `Model/run_model.R` script provides three examples:
-
-#### 1. Single Model Run
-
-```r
-# Set working directory to repository root
-setwd("path/to/Gelber_etal_2025_dispersal")
-
-# Source the run_model script
-source("Model/run_model.R")
-
-# The script will run a single simulation and save outputs to Model/Outputs/
-```
-
-#### 2. Multiple Runs (Sequential)
-
-Modify the `run_model.R` script to run multiple parameter combinations sequentially. Useful for testing and small-scale analyses.
-
-#### 3. Parallel Execution
-
-The script includes parallel processing using the `foreach` and `doParallel` packages to speed up multiple simulations.
-
-### Running on a Computing Cluster
-
-For large-scale simulations:
-
-1. Adjust parameters in `Model/parameters.R`
-2. Modify `Model/run_model.sh` with appropriate cluster specifications
-3. Submit the job:
-
-```bash
-sbatch Model/run_model.sh
-```
-
-### Customizing Parameters
-
-Edit `Model/parameters.R` to adjust:
-
-- **Static parameters** (`mod_par`): Grid size, number of species, demographic rates
-- **Varying parameters** (`var_par`): Combinations of habitat amount, fragmentation, autocorrelation
-- **Switches** (`switch`): Enable/disable model features (immigration, disturbance, etc.)
-
-Example parameter modification:
-
-```r
-# In parameters.R, adjust the varying parameter vectors:
-
-# Habitat amount
-habitat_percent_vector <- seq(0.2, 0.8, 0.2)
-
-# Fragmentation
-frag_factor_vector <- seq(0.1, 0.9, 0.2)
-
-# Spatial autocorrelation
-spatial_ac_vector <- seq(0.1, 0.9, 0.2)
-
-# Create all combinations
-var_par <- expand.grid(
-  frag = frag_factor_vector,
-  ac = spatial_ac_vector,
-  hab = habitat_percent_vector,
-  # ... other parameters
-)
-```
-
-## Model Output
-
-The model generates three main output files:
-
-1. **`output_general.csv`**: Landscape-level metrics at each time step
-   - Total abundance and species richness
-   - Shannon diversity
-   - Patch-level and sample-level averages
-
-2. **`output_sample.csv`**: Local community composition at sample locations
-   - Species presence/absence at specific grid cells
-   - Recorded at beginning and end of post-fragmentation phase
-
-3. **`output_dispersal.csv`**: Dispersal strategy-specific metrics
-   - Abundance and richness grouped by dispersal distance
-   - Tracked throughout the simulation
-
-## Reproducing Paper Figures
-
-<!-- Add instructions for reproducing figures when analysis scripts are ready -->
-
-The figures in the paper (Figures 2-7) are located in `R/figures/`. Scripts to generate these figures from model outputs will be added to the `R/` directory.
-
-## Citation
-
-If you use this code or model in your research, please cite:
-
-```
-Gelber, S., Tietjen, B., & May, F. (2025). Disturbance and landscape characteristics 
-interactively drive dispersal strategies in continuous and fragmented metacommunities. 
-[Journal Name]. [DOI]
-```
-
-BibTeX:
-```bibtex
-@article{gelber2025dispersal,
-  title={Disturbance and landscape characteristics interactively drive dispersal strategies in continuous and fragmented metacommunities},
-  author={Gelber, Stav and Tietjen, Britta and May, Felix},
-  journal={[Journal Name]},
-  year={2025},
-  doi={[DOI]}
-}
-```
+1. Adjust parameters in `Model/parameters.R`.
+2. Run locally with `Model/run_model.R`, or on a SLURM cluster with:
+   ```bash
+   sbatch Model/run_model.sh
+   ```
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Contact
-
-For questions or issues, please contact:
-
-- Stav Gelber: stav.gelber@fu-berlin.de
+This project is licensed under the GNU General Public License v3.0  see [LICENSE.md](LICENSE.md).
 
 ## Acknowledgments
 
-<!-- Add acknowledgments from the paper when available -->
-
-This research was supported by [funding sources]. We thank [collaborators/reviewers] for valuable feedback on this work.
+SG acknowledges funding from the German Research Foundation (DFG) under grant number MA 5962/1-1. We thank Selina Baldauf for her careful review of and constructive comments on the simulation model code. We also acknowledge the HPC Service of FUB-IT, Freie Universitat Berlin, for providing computing time.
 
 ## Related Publications
 
-- Gelber, S., Blowes, S.A., Chase, J.M., Huth, A., Schurr, F.M., Tietjen, B., Zeller, J.W., & May, F. (2023). Geometric and demographic effects explain contrasting fragmentation-biodiversity relationships across scales. [Previous related paper]
+- Gelber, S., Blowes, S.A., Chase, J.M., Huth, A., Schurr, F.M., Tietjen, B., Zeller, J.W., & May, F. (2023). Geometric and demographic effects explain contrasting fragmentation-biodiversity relationships across scales.
+
+## Contact
+
+Stav Gelber  stav.gelber@fu-berlin.de
