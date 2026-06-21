@@ -10,7 +10,7 @@ The figures are produced by twenty repetitions per parameter combination. The
 figure scripts cache a per-run summary to `data-raw/_cache/summary_<run>.rds` on
 first use, so re-runs do not re-read the full CSV output.
 
-Download the data from Zenodo: https://doi.org/10.5281/zenodo.18519866
+Download the data from Zenodo: https://doi.org/10.5281/zenodo.18519816
 
 ## Run-number to figure map
 

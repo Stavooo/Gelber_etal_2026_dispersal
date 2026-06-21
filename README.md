@@ -36,7 +36,7 @@ raw output is archived on Zenodo (see `data-raw/README.md` for the run map).
 
 The raw simulation output is too large for GitHub and is archived on Zenodo:
 
-> [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18519866.svg)](https://doi.org/10.5281/zenodo.18519866)
+> [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18519816.svg)](https://doi.org/10.5281/zenodo.18519816)
 
 To reproduce the figures, download the data from Zenodo and unpack it into the `data-raw/` directory, keeping the per-run subfolder structure (e.g., `data-raw/300/`, `data-raw/310/`, etc.). The run-number-to-figure map is documented in `data-raw/README.md`.
 
