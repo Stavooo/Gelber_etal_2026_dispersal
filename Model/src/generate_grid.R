@@ -13,7 +13,18 @@ generate_grid <- function(gr_size, ac_amount, frag_amount, hab_amount) {
     binary_grid <- setValues(binary_grid, runif(gr_size * gr_size))
     binary_grid[binary_grid == 0] <- 0.001
   } else if (switch$no_ac == 0) {
-    env_grid <- nlm_fbm(gr_size, gr_size, resolution = 1, fract_dim = 2 * (ac_amount))
+    # Use FFT-based fractional Brownian motion (inherently periodic / toroidal).
+    # Replaces the previous nlm_fbm() call that depended on the deprecated
+    # RandomFields package. The toroidal landscape, combined with toroidal
+    # dispersal (switch$torus == 1), produces a fully consistent torus world.
+    env_grid <- fbm_fft(
+      gr_size = gr_size,
+      ac_amount = ac_amount,
+      resolution = 1,
+      raster = TRUE,
+      rescale = TRUE,
+      seed = NULL
+    )
 
     binary_grid <- env_grid
     binary_grid[binary_grid == 0] <- 0.001

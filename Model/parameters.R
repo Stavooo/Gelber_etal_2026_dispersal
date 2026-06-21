@@ -65,7 +65,8 @@ mod_par <- data.frame(
   n_samples = 2, # How many samples to collect
   pos_neg_edge = 1, # * with death rate, so EE < 1 is positive (reduce DR) and EE > 1 is negative
   n_birth = 1, # number of births per time-step per agent
-  disturbance_rate = 0.50 # rate of disturbance
+  disturbance_rate = 0.50, # rate of disturbance (per-neighbour spread probability)
+  disturbance_freq = 0.25  # per-timestep probability that a disturbance event occurs
 )
 
 # a vector of varaying dispersal distances for simulations with species specific dispersal

@@ -4,9 +4,30 @@ cookie_cutting <- function(grid = grid,
                            habitat = mod_par$habitat_percent,
                            fragmentation = mod_par$frag_factor) {
 
-  frag_grid <- nlm_fbm(mod_par$grid_size, mod_par$grid_size, resolution = 1, fract_dim = 2 * (1 - fragmentation))
+  # FFT-based fractional Brownian motion produces an inherently toroidal
+  # fragmentation mask, matching the toroidal environment grid and toroidal
+  # dispersal. ac_amount = (1 - fragmentation): high fragmentation -> low
+  # autocorrelation -> small, dispersed habitat patches (same convention as
+  # the original nlm_fbm call which used fract_dim = 2 * (1 - fragmentation)).
+  frag_grid <- fbm_fft(
+    gr_size = mod_par$grid_size,
+    ac_amount = 1 - fragmentation,
+    resolution = 1,
+    raster = TRUE,
+    rescale = TRUE,
+    seed = NULL
+  )
 
-  suppressWarnings(binary_grid <- landscapetools::util_binarize(frag_grid, habitat)) # Binarize fragmentation grid as only matrix/habitat values are needed
+  # Binarize: cells with value >= habitat-quantile become habitat (kept as
+  # values > 1 to be overwritten by `grid`), the rest become matrix (NA).
+  # Replaces landscapetools::util_binarize() which depended on a deprecated
+  # package. quantile()-based binarization matches util_binarize semantics:
+  # the top `habitat` fraction of values are habitat.
+  thr <- stats::quantile(raster::values(frag_grid), probs = 1 - habitat,
+                         na.rm = TRUE, names = FALSE)
+  binary_grid <- frag_grid
+  binary_grid[frag_grid >= thr] <- 2  # habitat marker (will be overwritten)
+  binary_grid[frag_grid <  thr] <- 1  # matrix marker
   binary_grid[binary_grid == 1] <- NA # Subset matrix to NA
 
 

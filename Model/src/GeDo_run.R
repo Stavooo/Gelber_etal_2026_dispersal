@@ -145,9 +145,18 @@ GeDo_run <- function(mod_par,
         agents_grid <- step3$agents_grid
       }
 
-      # run disturbance function and update agent list and grid
+      # run disturbance function and update agent list and grid.
+      # disturbance_freq controls the per-timestep probability that an event
+      # is triggered at all (reviewer R5). Prefer var_par if it specifies it
+      # (used by Run D), else fall back to mod_par$disturbance_freq.
       if (switch$disturbance == 1) {
-        step4 <- disturbance(agents, grid, var_par$disturbance)
+        d_freq <- if (!is.null(var_par$disturbance_freq) &&
+                      !is.na(var_par$disturbance_freq)) {
+          var_par$disturbance_freq
+        } else {
+          mod_par$disturbance_freq
+        }
+        step4 <- disturbance(agents, grid, var_par$disturbance, d_freq)
         agents <- step4$agents
       }
 
@@ -439,9 +448,18 @@ GeDo_run <- function(mod_par,
         agents_grid <- step3$agents_grid
       }
 
-      # run disturbance function and update agent list and grid
+      # run disturbance function and update agent list and grid.
+      # disturbance_freq controls the per-timestep probability that an event
+      # is triggered at all (reviewer R5). Prefer var_par if it specifies it
+      # (used by Run D), else fall back to mod_par$disturbance_freq.
       if (switch$disturbance == 1) {
-        step4 <- disturbance(agents, grid, var_par$disturbance)
+        d_freq <- if (!is.null(var_par$disturbance_freq) &&
+                      !is.na(var_par$disturbance_freq)) {
+          var_par$disturbance_freq
+        } else {
+          mod_par$disturbance_freq
+        }
+        step4 <- disturbance(agents, grid, var_par$disturbance, d_freq)
         agents <- step4$agents
       }
 

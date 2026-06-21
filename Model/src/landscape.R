@@ -1,58 +1,71 @@
-# Function to create a two-dimensional fractional Brownian motion neutral landscape model.
-# The function was taken from the NLMR package, a part of the rOpenSci project - https://github.com/ropensci/NLMR
-# The package was developed by Marco Sciaini, Matthias Fritsch, Craig Simpkins, Cédric Scherer,and Sebastian Hanß
+# Function to generate a two-dimensional Gaussian random field with a power-law
+# (fractional-Brownian-motion-like) spectrum, using FFT-based spectral synthesis.
+# The field produced by fbm_fft() is inherently periodic (toroidal) — its spatial
+# autocorrelation wraps seamlessly across the grid edges, which is what justifies
+# using a toroidal dispersal kernel in the simulation.
+#
+# This replaces the earlier nlm_fbm() implementation (NLMR / RandomFields), both
+# to remove the dependency on the deprecated RandomFields package and to produce
+# truly toroidal landscapes.
+#
+# ac_amount in [0, 1] is mapped linearly to the spectral exponent alpha in
+# [alpha.min, alpha.max] (default 0..3). Higher alpha gives smoother fields
+# (more autocorrelation).
 
-nlm_fbm <- function(ncol,
-                    nrow,
+fbm_fft <- function(gr_size = 128,
+                    ac_amount = 0.7,
                     resolution = 1,
-                    fract_dim = 1,
-                    user_seed = NULL,
-                    rescale = TRUE,
-                    ...) {
-  # Check function arguments ----
-  checkmate::assert_count(ncol, positive = TRUE)
-  checkmate::assert_count(nrow, positive = TRUE)
+                    alpha.min = 0,
+                    alpha.max = 3,
+                    seed = NULL,
+                    raster = TRUE,
+                    rescale = TRUE) {
+  checkmate::assert_count(gr_size, positive = TRUE)
   checkmate::assert_numeric(resolution)
-  checkmate::assert_numeric(fract_dim)
-  checkmate::assert_true(fract_dim > 0)
-  checkmate::assert_true(fract_dim <= 2)
+  checkmate::assert_numeric(ac_amount)
+  checkmate::assert_true(ac_amount >= 0)
+  checkmate::assert_true(ac_amount <= 1)
   checkmate::assert_logical(rescale)
-  
-  # specify RandomFields options ----
-  RandomFields::RFoptions(cPrintlevel = 0)
-  RandomFields::RFoptions(spConform = FALSE)
-  RandomFields::RFoptions(...)
-  
-  # set RF seed ----
-  RandomFields::RFoptions(seed = user_seed)
-  
-  # formulate and simulate fBm model
-  fbm_model <- RandomFields::RMfbm(
-    alpha = fract_dim)
-  fbm_simu <- RandomFields::RFsimulate(fbm_model,
-                                       # fBm changes x and y?
-                                       y = seq.int(0, length.out = ncol),
-                                       x = seq.int(0, length.out = nrow),
-                                       grid = TRUE)
-  
-  
-  # transform simulation into raster ----
-  fbm_raster <- raster::raster(fbm_simu)
-  
-  
-  # specify extent and resolution ----
-  raster::extent(fbm_raster) <- c(
-    0,
-    ncol(fbm_raster) * resolution,
-    0,
-    nrow(fbm_raster) * resolution
-  )
-  
-  # Rescale values to 0-1 ----
-  if (rescale == TRUE) {
-    fbm_raster <- landscapetools::util_rescale(fbm_raster)
-  }
-  
-  return(fbm_raster)
-}
 
+  N <- gr_size
+  alpha <- alpha.min + ac_amount * (alpha.max - alpha.min)
+
+  # Build frequency grid centered on DC (FFT-shifted layout)
+  fx <- ifelse(0:(N - 1) <= N / 2, 0:(N - 1), 0:(N - 1) - N)
+  fy <- fx
+  FX <- matrix(rep(fx, each = N), nrow = N)
+  FY <- matrix(rep(fy, times = N), nrow = N)
+  freq <- sqrt(FX^2 + FY^2)
+  freq[1, 1] <- 1  # avoid 0/0 at DC; the DC bin is zeroed below
+  amp <- 1 / (freq^alpha)
+
+  # Generate complex white noise and shape its spectrum, then inverse FFT
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  noise <- matrix(rnorm(N * N), nrow = N) +
+    1i * matrix(rnorm(N * N), nrow = N)
+  f_field <- amp * noise
+  f_field[1, 1] <- 0
+  field <- Re(fft(f_field, inverse = TRUE))
+
+  if (rescale) {
+    field_min <- min(field)
+    field_max <- max(field)
+    if (field_max > field_min) {
+      field <- (field - field_min) / (field_max - field_min)
+    } else {
+      field <- field * 0
+    }
+  }
+
+  if (raster) {
+    rast <- raster::raster(field)
+    raster::extent(rast) <- c(0, ncol(rast) * resolution,
+                              0, nrow(rast) * resolution)
+    raster::res(rast) <- resolution
+    return(rast)
+  } else {
+    return(field)
+  }
+}

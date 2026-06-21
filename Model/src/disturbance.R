@@ -1,8 +1,19 @@
-# A function to simulate a disturbance event
+# A function to simulate a disturbance event.
+#
+# Arguments
+#   agents : agents data.table
+#   grid   : current simulation raster (NA = matrix, value = habitat)
+#   dis_r  : per-neighbour spread probability (original "disturbance rate" knob)
+#   d_freq : per-timestep probability that a disturbance event happens at all
+#            (default 0.25 preserves the original behaviour, where the trigger
+#             was the hard-coded `runif(1) > 0.75` rule).
+#
+# d_freq is the new knob requested by reviewer R5 — it lets us vary the
+# *frequency* of disturbance independently of how aggressively each event
+# spreads. Logic is flipped vs the old `> 0.75` form for readability.
 
-disturbance <- function(agents, grid, dis_r) {
-    # 25% chance of disturbance
-    if (runif(1, 0, 1) > 0.75) {
+disturbance <- function(agents, grid, dis_r, d_freq = 0.25) {
+    if (runif(1, 0, 1) < d_freq) {
         # get a list of all habitat cells
         grid_values <- getValues(grid)
         possible_cells <- which(!is.na(grid_values))
