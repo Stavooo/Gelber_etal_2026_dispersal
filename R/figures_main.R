@@ -26,7 +26,7 @@
 #   Fig2 row5 vary hab          203          303     modified   dist OFF
 #   Fig3      ac x disturbance  210          310     continuous dist ON  (+ref)
 #   Fig4      frag x hab        220          320     modified   dist OFF
-#   Figs5-7   4D                230          231     modified   dist ON
+#   Figs5-7   3D ac x hab x dist 230          370     modified   dist ON (frag=0.7 log-normal; exp still 230/4D)
 #   Sup       sensitivity OAT   250          350     modified   dist OFF
 #   Sup       disturbance freq  260          360     continuous dist ON
 #   Sup S1/S3 hab x ac x dist    -           370     modified   dist ON (frag=0.7)
@@ -558,7 +558,7 @@ exp_set <- list(
   exponential_kernel = list(ac = "200", dist = "201", freq = "204", frag = "202", hab = "203",
                             f3 = "210", f4 = "220", f567 = "230", sens = "250", df = "260"),
   lognormal_kernel   = list(ac = "300", dist = "301", freq = "304", frag = "302", hab = "303",
-                            f3 = "310", f4 = "320", f567 = "231", sens = "350", df = "360",
+                            f3 = "310", f4 = "320", f567 = "370", sens = "350", df = "360",
                             s13 = "370", s24 = "371")
 )
 
@@ -566,4 +566,4 @@ for (kname in names(exp_set)) build_kernel_figures(kname, exp_set[[kname]])
 
 cat("\nAll figures written under:", OUT_ROOT, "\n")
 cat("  exponential_kernel/  (200-block + 230)\n")
-cat("  lognormal_kernel/    (300-block + 231)\n")
+cat("  lognormal_kernel/    (300-block + 370)\n")
